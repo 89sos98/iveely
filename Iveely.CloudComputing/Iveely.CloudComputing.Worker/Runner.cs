@@ -34,11 +34,20 @@ namespace Iveely.CloudComputing.Worker
 
         //private string _status;
 
+        /// <summary>
+        /// 初始监控器
+        /// </summary>
+        /// <param name="status"></param>
         public Runner(ref RunningStatus status)
         {
             Status = status;
         }
 
+        /// <summary>
+        /// 运行监控器
+        /// </summary>
+        /// <param name="machineName"></param>
+        /// <param name="servicePort"></param>
         public void StartRun(string machineName, int servicePort)
         {
             _machineName = machineName;
@@ -47,11 +56,15 @@ namespace Iveely.CloudComputing.Worker
             string sourceCode = Encoding.UTF8.GetString(dataBytes);
             _runningPath = "ISE://application/" + Status.Packet.TimeStamp + "/" + Status.Packet.AppName + "/" +
                            _machineName + "," + _servicePort;
-            Logger.Info("Running path " + _runningPath);
+            Logger.Info("运行中的Path " + _runningPath);
             _thread = new Thread(Excute);
             _thread.Start(sourceCode);
         }
 
+        /// <summary>
+        /// 开始执行
+        /// </summary>
+        /// <param name="obj">sourceCode</param>
         private void Excute(object obj)
         {
             try

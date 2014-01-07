@@ -8,6 +8,7 @@ namespace Iveely.CloudComputing.StateCenter
     {
         /// <summary>
         /// 状态中心的服务
+        /// 用于当前所有worker、Merger的控制运算中心。
         /// </summary>
         private static readonly Service StateServer =
             new Service(Dns.GetHostName(), SettingItem.GetInstance().StateCenterPort);

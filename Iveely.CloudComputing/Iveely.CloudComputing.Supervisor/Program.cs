@@ -19,6 +19,7 @@ namespace Iveely.CloudComputing.Supervisor
 {
     /// <summary>
     /// worker的守护进程
+    /// 用于监控Worker的执行情况，倘若Worker异常中断，则自动重启worker。
     /// </summary>
     public class Program
     {

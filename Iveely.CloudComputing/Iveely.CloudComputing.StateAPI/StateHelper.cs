@@ -23,7 +23,7 @@ namespace Iveely.CloudComputing.StateAPI
     /// </summary>
     public class StateHelper
     {
-        private static Client[] _clients;
+        private static Client[] _centerHostClients;
 
         /// <summary>
         /// Put the path into the tree
@@ -35,7 +35,7 @@ namespace Iveely.CloudComputing.StateAPI
             CheckConnect();
             StatePacket packet = new StatePacket(path, StatePacket.Type.Add, Serializer.SerializeToBytes(data));
             Logger.Info("put path " + path);
-            return _clients.Aggregate(true, (current, client) => current & client.Send<bool>(packet));
+            return _centerHostClients.Aggregate(true, (current, client) => current & client.Send<bool>(packet));
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Iveely.CloudComputing.StateAPI
         {
             CheckConnect();
             StatePacket supervisorPacket = new StatePacket("/root/supervisor/score/", StatePacket.Type.GetAvailavleWorker, Serializer.SerializeToBytes("Null"));
-            Object obj = _clients[0].Send<Object>(supervisorPacket);
+            Object obj = _centerHostClients[0].Send<Object>(supervisorPacket);
             if (obj != null)
             {
                 return (IEnumerable<string>)obj;
@@ -66,7 +66,7 @@ namespace Iveely.CloudComputing.StateAPI
         {
             CheckConnect();
             StatePacket packet = new StatePacket(path, StatePacket.Type.IsExists, Serializer.SerializeToBytes("Check is exist"));
-            bool isExist = _clients[0].Send<bool>(packet);
+            bool isExist = _centerHostClients[0].Send<bool>(packet);
             return isExist;
         }
 
@@ -76,7 +76,7 @@ namespace Iveely.CloudComputing.StateAPI
             StatePacket packet = new StatePacket(path, StatePacket.Type.Rename,
                 Encoding.UTF8.GetBytes(nodeName)) {WaiteCallBack = false};
             //1207
-            _clients[0].Send<bool>(packet);
+            _centerHostClients[0].Send<bool>(packet);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace Iveely.CloudComputing.StateAPI
         {
             CheckConnect();
             StatePacket packet = new StatePacket(path, StatePacket.Type.Delete, Serializer.SerializeToBytes("delete data"));
-            return _clients.Aggregate(true, (current, client) => current & client.Send<bool>(packet));
+            return _centerHostClients.Aggregate(true, (current, client) => current & client.Send<bool>(packet));
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Iveely.CloudComputing.StateAPI
         {
             CheckConnect();
             StatePacket packet = new StatePacket(path, StatePacket.Type.Children, Serializer.SerializeToBytes("get children"));
-            List<string> obj = _clients[0].Send<List<string>>(packet);
+            List<string> obj = _centerHostClients[0].Send<List<string>>(packet);
             if (obj == null)
             {
                 return new List<string>();
@@ -119,7 +119,7 @@ namespace Iveely.CloudComputing.StateAPI
             {
                 CheckConnect();
                 StatePacket packet = new StatePacket(path, StatePacket.Type.Get, Serializer.SerializeToBytes("get data"));
-                T obj = _clients[0].Send<T>(packet);
+                T obj = _centerHostClients[0].Send<T>(packet);
                 return obj;
             }
             catch (Exception exception)
@@ -142,25 +142,25 @@ namespace Iveely.CloudComputing.StateAPI
             //    exception
             //    );
             //StatePacket packet = new StatePacket("", StatePacket.Type.AddMonitor, Serializer.SerializeToBytes(stateDesc));
-            //foreach (var client in _clients)
+            //foreach (var client in _centerHostClients)
             //{
             //    client.Send<string>(packet);
             //}
         }
 
         /// <summary>
-        /// Check Connect to server
+        /// 检查状态中心的链接
         /// </summary>
         private static void CheckConnect()
         {
-            if (_clients == null)
+            if (_centerHostClients == null)
             {
                 string[] hosts = SettingItem.GetInstance().StateCenterHosts.ToArray();
-                _clients = new Client[hosts.Count()];
+                _centerHostClients = new Client[hosts.Count()];
                 int port = SettingItem.GetInstance().StateCenterPort;
                 for (int i = 0; i < hosts.Count(); i++)
                 {
-                    _clients[i] = new Client(hosts[i], port);
+                    _centerHostClients[i] = new Client(hosts[i], port);
                 }
             }
         }

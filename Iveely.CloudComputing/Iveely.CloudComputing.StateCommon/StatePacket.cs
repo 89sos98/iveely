@@ -71,15 +71,18 @@ namespace Iveely.CloudComputing.StateCommon
         public Type PType { get; set; }
 
         /// <summary>
-        /// 数据
-        /// </summary>
-       // public new byte[] Data { get; set; }
-
-        /// <summary>
         /// 此包是否需要回复
         /// </summary>
         public new bool WaiteCallBack { get; set; }
 
+        /// <summary>
+        /// 初始化状态包
+        /// </summary>
+        /// <param name="path">路径</param>
+        /// <param name="type">状态包传送类型</param>
+        /// <param name="data">数据</param>
+        /// <param name="name">包名</param>
+        /// <param name="waiteCallBack">此包是否需要回复</param>
         public StatePacket(string path, Type type, byte[] data, string name = "No Name", bool waiteCallBack = true)
         {
             PType = type;

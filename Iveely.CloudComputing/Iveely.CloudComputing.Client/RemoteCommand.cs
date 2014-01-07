@@ -22,23 +22,184 @@ using Iveely.Framework.Text;
 
 namespace Iveely.CloudComputing.Client
 {
+    /// <summary>
+    /// 远程命令
+    /// </summary>
     public abstract class RemoteCommand
     {
         public abstract void ProcessCmd(string[] args);
 
         public static void UnknowCommand()
         {
-            Console.WriteLine("         Unknow command,you should type as follow format:");
-            Console.WriteLine("             submit [filepath] [namespace.classname] [appname] [Optional:true]");
-            Console.WriteLine("             split [filepath] [remotepath]");
-            Console.WriteLine("             split [filepath] [remotepath] splitstring key1 key2 key3...");
-            Console.WriteLine("             download [remotepath] [filepath]");
-            Console.WriteLine("             delete [remotepath]");
-            Console.WriteLine("             rename [filepath] [newfileName]");
-            Console.WriteLine("             list [/folder]");
-            Console.WriteLine("             task");
-            Console.WriteLine("             kill [app name]");
-            Console.WriteLine("             exit");
+            Console.WriteLine("        未知命令,用法如下:");
+            Console.WriteLine("            submit [filepath] [namespace.classname] [appname] [Optional:true] 提交程序");
+            Console.WriteLine("            split [filepath] [remotepath] 切分文件");
+            Console.WriteLine("            split [filepath] [remotepath] splitstring key1 key2 key3... 切分文件");
+            Console.WriteLine("            download [remotepath] [filepath] 下载");
+            Console.WriteLine("            delete [remotepath] 删除");
+            Console.WriteLine("            rename [filepath] [newfileName] 重命名");
+            Console.WriteLine("            list [/folder] 显示文件");
+            Console.WriteLine("            task 显示任务");
+            Console.WriteLine("            kill [app name] 停止任务命令");
+            Console.WriteLine("            exit 退出命令");
+        }
+    }
+
+    /// <summary>
+    /// 提交命令
+    /// </summary>
+    public class SubmitCmd : RemoteCommand
+    {
+        private static Server _server;
+
+        private static bool _showMsgFromRemote;
+
+        public override void ProcessCmd(string[] args)
+        {
+            if (args.Length == 5)
+            {
+                _showMsgFromRemote = args[4] == "true";
+            }
+
+            if (args.Length != 4 && !_showMsgFromRemote)
+            {
+                UnknowCommand();
+                return;
+            }
+            //1.1 编译应用程序
+            Logger.Info("开始编译您的代码...");
+            string appName = args[3];
+            string className = args[2];
+            string filePath = args[1];
+            string timeStamp = DateTime.Now.ToFileTimeUtc().ToString(CultureInfo.InvariantCulture);
+            string compileResult = CompileCode(filePath);
+            if (compileResult != string.Empty)
+            {
+                Logger.Error(compileResult);
+                return;
+            }
+
+            //1.2 读取编译后的文件
+            Logger.Info("准备发送您的应用程序到平台...");
+            string sourceCode = File.ReadAllText(filePath);
+            byte[] bytes = Encoding.UTF8.GetBytes(sourceCode);
+
+            //1.3 上传程序至各个节点
+            Thread thread = new Thread(StartListen);
+            thread.Start();
+
+            StateHelper.Put("ISE://history/" + timeStamp + "/" + appName, Dns.GetHostName());
+
+            IEnumerable<string> ipPathes = StateHelper.GetChildren("ISE://system/state/worker");
+            var ipPaths = ipPathes as string[] ?? ipPathes.ToArray();
+            foreach (var ipPath in ipPaths)
+            {
+                Logger.Info("当前Worker Ip Path:" + ipPath);
+                string[] ip = ipPath.Substring(ipPath.LastIndexOf('/') + 1, ipPath.Length - ipPath.LastIndexOf('/') - 1).Split(',');
+                Framework.Network.Synchronous.Client transfer = new Framework.Network.Synchronous.Client(ip[0], int.Parse(ip[1]));
+                ExcutePacket codePacket = new ExcutePacket(bytes, className, appName, timeStamp, ExcutePacket.Type.Code);
+                codePacket.SetReturnAddress(Dns.GetHostName(), 8800);
+                //1207
+                codePacket.WaiteCallBack = false;
+                transfer.Send<object>(codePacket);
+            }
+
+            //1.4 结点运行程序，直至结束
+            DateTime submitTime = DateTime.UtcNow;
+            while (!IsDelay(submitTime, 60))
+            {
+                if (CheckApplicationExit(timeStamp, appName, ipPaths.Count()))
+                {
+                    Console.WriteLine("应用程序已提交，您可以使用[task]命令查看状态.");
+                    return;
+                }
+                Thread.Sleep(1000);
+            }
+            Console.WriteLine("应用程序运行时间太长出现故障.");
+
+        }
+
+        /// <summary>
+        /// 启动返回数据监听
+        /// </summary>
+        private static void StartListen()
+        {
+            if (_server == null)
+            {
+                _server = new Server(Dns.GetHostName(), 8800, ProcessResponse);
+                _server.Listen();
+            }
+        }
+
+        /// <summary>
+        /// 是否已经运行超时
+        /// </summary>
+        /// <param name="sumbitTime">应用程序提交时间</param>
+        /// <param name="allowMaxTime">允许最长运行时间(单位：分)</param>
+        /// <returns></returns>
+        private static bool IsDelay(DateTime sumbitTime, long allowMaxTime)
+        {
+            return (DateTime.UtcNow - sumbitTime).TotalMinutes > allowMaxTime;
+        }
+
+        /// <summary>
+        /// 检查应用程序是否已经退出
+        /// </summary>
+        /// <returns></returns>
+        private static bool CheckApplicationExit(string timeStamp, string appName, int workerCount)
+        {
+            IEnumerable<string> finishedStates = StateHelper.GetChildren("ISE://application/" + timeStamp + "/" + appName);
+            var enumerable = finishedStates as string[] ?? finishedStates.ToArray();
+            if (enumerable.Any() && enumerable.Count() == workerCount)
+            {
+                foreach (var finishedState in enumerable)
+                {
+                    Logger.Info(finishedState + ":" + StateHelper.Get<string>(finishedState));
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 编译代码
+        /// </summary>
+        /// <param name="fileName">文件</param>
+        /// <returns></returns>
+        private static string CompileCode(string fileName)
+        {
+            if (File.Exists(fileName))
+            {
+                //Framework.Text.CodeCompiler compiler = new CodeCompiler();
+                List<string> references = new List<string>
+                {
+                    "Iveely.CloudComputing.Client.exe",
+                    "Iveely.Framework.dll",
+                    "NDatabase3.dll"
+                };
+                return CodeCompiler.Compile(File.ReadAllLines(fileName), references);
+            }
+            throw new FileNotFoundException(fileName + " 文件没找到!");
+        }
+
+        private static byte[] ProcessResponse(byte[] bytes)
+        {
+            try
+            {
+                if (_showMsgFromRemote)
+                {
+                    Packet packet = Serializer.DeserializeFromBytes<Packet>(bytes);
+                    byte[] dataBytes = packet.Data;
+                    string information = Serializer.DeserializeFromBytes<string>(dataBytes);
+                    Console.WriteLine("[响应输出： {0}] {1}", DateTime.UtcNow, information);
+                }
+            }
+            catch (Exception exception)
+            {
+                Logger.Error(exception);
+            }
+            return null;
+
         }
     }
 
@@ -138,164 +299,6 @@ namespace Iveely.CloudComputing.Client
     }
 
     /// <summary>
-    /// 提交命令
-    /// </summary>
-    public class SubmitCmd : RemoteCommand
-    {
-        private static Server _server;
-
-        private static bool _showMsgFromRemote;
-
-        public override void ProcessCmd(string[] args)
-        {
-            if (args.Length == 5)
-            {
-                _showMsgFromRemote = args[4] == "true";
-            }
-
-            if (args.Length != 4 && !_showMsgFromRemote)
-            {
-                UnknowCommand();
-                return;
-            }
-            //1.1 编译应用程序
-            Logger.Info("Start Compile your code...");
-            string appName = args[3];
-            string className = args[2];
-            string filePath = args[1];
-            string timeStamp = DateTime.Now.ToFileTimeUtc().ToString(CultureInfo.InvariantCulture);
-            string compileResult = CompileCode(filePath);
-            if (compileResult != string.Empty)
-            {
-                Logger.Error(compileResult);
-                return;
-            }
-
-            //1.2 读取编译后的文件
-            Logger.Info("Preparing for send your application to platform...");
-            string sourceCode = File.ReadAllText(filePath);
-            byte[] bytes = Encoding.UTF8.GetBytes(sourceCode);
-
-            //1.3 上传程序至各个节点
-            Thread thread = new Thread(StartListen);
-            thread.Start();
-
-            StateHelper.Put("ISE://history/" + timeStamp + "/" + appName,
-                Dns.GetHostName());
-
-            IEnumerable<string> ipPathes = StateHelper.GetChildren("ISE://system/state/worker");
-            var ipPaths = ipPathes as string[] ?? ipPathes.ToArray();
-            foreach (var ipPath in ipPaths)
-            {
-                Logger.Info("Current worker ip path:" + ipPath);
-                string[] ip =
-                    ipPath.Substring(ipPath.LastIndexOf('/') + 1, ipPath.Length - ipPath.LastIndexOf('/') - 1)
-                        .Split(',');
-                Framework.Network.Synchronous.Client transfer = new Framework.Network.Synchronous.Client(ip[0],
-                    int.Parse(ip[1]));
-                ExcutePacket codePacket = new ExcutePacket(bytes, className, appName, timeStamp,
-                    ExcutePacket.Type.Code);
-                codePacket.SetReturnAddress(Dns.GetHostName(), 8800);
-                //1207
-                codePacket.WaiteCallBack = false;
-                transfer.Send<object>(codePacket);
-            }
-
-            //1.4 结点运行程序，直至结束
-            DateTime submitTime = DateTime.UtcNow;
-            while (!IsDelay(submitTime, 60))
-            {
-                if (CheckApplicationExit(timeStamp, appName, ipPaths.Count()))
-                {
-                    Console.WriteLine("Application has submitted, you can user [task] command to see the status.");
-                    return;
-                }
-                Thread.Sleep(1000);
-            }
-            Console.WriteLine("Application failured as run too much time.");
-
-        }
-
-        /// <summary>
-        /// 启动返回数据监听
-        /// </summary>
-        private static void StartListen()
-        {
-            if (_server == null)
-            {
-                _server = new Server(Dns.GetHostName(), 8800, ProcessResponse);
-                _server.Listen();
-            }
-        }
-
-        /// <summary>
-        /// 是否已经运行超时
-        /// </summary>
-        /// <param name="sumbitTime">应用程序提交时间</param>
-        /// <param name="allowMaxTime">允许最长运行时间(单位：分)</param>
-        /// <returns></returns>
-        private static bool IsDelay(DateTime sumbitTime, long allowMaxTime)
-        {
-            return (DateTime.UtcNow - sumbitTime).TotalMinutes > allowMaxTime;
-        }
-
-        /// <summary>
-        /// 检查应用程序是否已经退出
-        /// </summary>
-        /// <returns></returns>
-        private static bool CheckApplicationExit(string timeStamp, string appName, int workerCount)
-        {
-            IEnumerable<string> finishedStates = StateHelper.GetChildren("ISE://application/" + timeStamp + "/" + appName);
-            var enumerable = finishedStates as string[] ?? finishedStates.ToArray();
-            if (enumerable.Any() && enumerable.Count() == workerCount)
-            {
-                foreach (var finishedState in enumerable)
-                {
-                    Logger.Info(finishedState + ":" + StateHelper.Get<string>(finishedState));
-                }
-                return true;
-            }
-            return false;
-        }
-
-        private static string CompileCode(string fileName)
-        {
-            if (File.Exists(fileName))
-            {
-                //Framework.Text.CodeCompiler compiler = new CodeCompiler();
-                List<string> references = new List<string>
-                {
-                    "Iveely.CloudComputing.Client.exe",
-                    "Iveely.Framework.dll",
-                    "NDatabase3.dll"
-                };
-                return CodeCompiler.Compile(File.ReadAllLines(fileName), references);
-            }
-            throw new FileNotFoundException(fileName + " is not found!");
-        }
-
-        private static byte[] ProcessResponse(byte[] bytes)
-        {
-            try
-            {
-                if (_showMsgFromRemote)
-                {
-                    Packet packet = Serializer.DeserializeFromBytes<Packet>(bytes);
-                    byte[] dataBytes = packet.Data;
-                    string information = Serializer.DeserializeFromBytes<string>(dataBytes);
-                    Console.WriteLine("[Response {0}] {1}", DateTime.UtcNow, information);
-                }
-            }
-            catch (Exception exception)
-            {
-                Logger.Error(exception);
-            }
-            return null;
-
-        }
-    }
-
-    /// <summary>
     /// 下载命令
     /// </summary>
     public class DownloadCmd : RemoteCommand
@@ -386,7 +389,7 @@ namespace Iveely.CloudComputing.Client
             string filePath = args[1];
             foreach (string t in workers)
             {
-//3.2 通知下载文件
+                //3.2 通知下载文件
                 string[] ip =
                     t.Substring(t.LastIndexOf('/') + 1,
                         t.Length - t.LastIndexOf('/') - 1)
@@ -474,6 +477,9 @@ namespace Iveely.CloudComputing.Client
         }
     }
 
+    /// <summary>
+    /// 停止任务命令
+    /// </summary>
     public class KillCmd : RemoteCommand
     {
         public override void ProcessCmd(string[] args)
@@ -504,6 +510,9 @@ namespace Iveely.CloudComputing.Client
         }
     }
 
+    /// <summary>
+    /// 显示所有任务命令
+    /// </summary>
     public class TaskCmd : RemoteCommand
     {
         public override void ProcessCmd(string[] args)

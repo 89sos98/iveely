@@ -11,12 +11,26 @@ using Iveely.CloudComputing.Client;
 
 namespace Iveely.CloudComputing.Worker
 {
+    /// <summary>
+    /// 运行状态类
+    /// </summary>
     [Serializable]
     public class RunningStatus
     {
+        /// <summary>
+        /// 状态
+        /// </summary>
         public string Description;
+        /// <summary>
+        /// 执行包
+        /// </summary>
         public ExcutePacket Packet;
 
+        /// <summary>
+        /// 初始运行状态类
+        /// </summary>
+        /// <param name="packet">执行包</param>
+        /// <param name="status">状态</param>
         public RunningStatus(ExcutePacket packet, string status)
         {
             Packet = packet;

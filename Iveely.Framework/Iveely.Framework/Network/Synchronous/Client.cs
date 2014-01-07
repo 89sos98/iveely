@@ -70,8 +70,6 @@ namespace Iveely.Framework.Network.Synchronous
                 sendList.AddRange(sendBytesLength);
                 sendList.AddRange(sendDataBytes);
 
-
-
                 // 获取和服务端会话的流
                 using (NetworkStream netStream = client.GetStream())
                 {

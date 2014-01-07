@@ -10,6 +10,10 @@ using Iveely.Framework.Text;
 
 namespace Iveely.CloudComputing.Merger
 {
+    /// <summary>
+    /// 全局运算器。在分布式计算中，常常会涉及到全局运算，每一个节点都在计算，
+    /// 那么当遇到全局求和、求平均等等之类的时候，就需要Merger来操作。
+    /// </summary>
     internal class Program
     {
         private static Server _mergerSupervisor;

@@ -15,6 +15,7 @@ namespace Iveely.CloudComputing.Client
     {
         /// <summary>
         /// 供提交客户端应用程序
+        /// 用户的控制台操作程序，用户提交程序，查看自己应用程序的运行状态。
         /// 格式：submit filepath namespace.classname appname
         ///    split filepath remotepath(ex. split test.txt system/test.txt)
         ///    split filepath remotepath splitstring key1 key2 key3...
@@ -37,7 +38,7 @@ namespace Iveely.CloudComputing.Client
                     {
                         ConsoleColor color = Console.ForegroundColor;
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
-                        Console.Write("Cmd Input:");
+                        Console.Write("请输入命令:");
                         Console.ForegroundColor = color;
                         string readLine = Console.ReadLine();
                         if (!string.IsNullOrEmpty(readLine))
@@ -95,45 +96,71 @@ namespace Iveely.CloudComputing.Client
             #endregion
 
             //4. 如果是删除
+            #region delete
+
             else if (cmd == "delete")
             {
                 command = new DeleteCmd();
                 command.ProcessCmd(args);
             }
 
+            #endregion
+
             //5. 如果是显示文件
+            #region list
+
             else if (cmd == "list")
             {
                 command = new ListCmd();
                 command.ProcessCmd(args);
             }
 
+            #endregion
+
             //6. 如果是重命名
+            #region rename
+
             else if (cmd == "rename")
             {
                 command = new RenameCmd();
                 command.ProcessCmd(args);
             }
 
+            #endregion
+
             //7. 如果是退出命令
+            #region exit
+
             else if (cmd == "exit")
             {
                 return true;
             }
 
+            #endregion
+
             //8. 如果是停止任务命令
+            #region kill
+
             else if(cmd=="kill")
             {
                 command =new KillCmd();
                 command.ProcessCmd(args);
             }
 
+            #endregion
+
             //9. 如果是显示所有任务命令
+            #region task
+
             else if (cmd == "task")
             {
                 command=new TaskCmd();
                 command.ProcessCmd(args);
             }
+
+            #endregion
+
+            #region 其它
 
             else
             {
@@ -154,6 +181,8 @@ namespace Iveely.CloudComputing.Client
                 //dataSort.Run(array);
                 RemoteCommand.UnknowCommand();
             }
+
+            #endregion
             return false;
         }
     }

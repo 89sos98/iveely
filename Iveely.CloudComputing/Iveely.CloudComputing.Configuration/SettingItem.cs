@@ -19,7 +19,7 @@ namespace Iveely.CloudComputing.Configuration
         public List<string> StateCenterHosts { get; set; }
 
         /// <summary>
-        /// The port of the state center
+        /// 状态中心服务端口
         /// </summary>
         public int StateCenterPort { get; set; }
 
@@ -121,18 +121,19 @@ namespace Iveely.CloudComputing.Configuration
         private static SettingItem GetDefaultConfigration()
         {
             SettingItem configration = new SettingItem();
+            string _ip = "192.168.30.60";// Dns.GetHostName();
             //configration.SendDataSizeTholdhold = 10000;
             //configration.ReadTaskBasePathonCenter = "/root/task/read/";
             //configration.WriteTaskBasePathonCenter = "/root/task/write/";
             //configration.VirtualFileSystemBasePath = "/root/filesystem/ise/";
-            configration.StateCenterHosts.Add(Dns.GetHostName());
+            configration.StateCenterHosts.Add(_ip);
             configration.StateCenterPort = 3026;
             //configration.UserAppMaxRunningTime = 5;
             //configration.SysAppMaxRunningTime = 27 * 7;
             configration.CacheNodePort = 8081;
-            configration.CacherCollections.Add(Dns.GetHostName());
-            configration.MergerCollections.Add(Dns.GetHostName());
-            //configration.WorkerCollections.Add(Dns.GetHostName());
+            configration.CacherCollections.Add(_ip);
+            configration.MergerCollections.Add(_ip);
+            //configration.WorkerCollections.Add(_ip);
             configration.MergeServerIP = "127.0.0.1";
             configration.MaxAppToRun = 10;
             configration.WorkerStartPort = 2000;

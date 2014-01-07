@@ -29,12 +29,19 @@ namespace Iveely.Framework.Text
         /// 编译源码
         /// </summary>
         /// <param name="sourceCode">源码</param>
-        /// <param name="references"></param>
+        /// <param name="references">引用文件</param>
         /// <returns>返回错误集合</returns>
         public static string Compile(string[] sourceCode, List<string> references)
         {
+            
+#if DEBUG
             CSharpCodeProvider objCSharpCodePrivoder = new CSharpCodeProvider();
-            ICodeCompiler objICodeCompiler = objCSharpCodePrivoder.CreateCompiler();
+            ICodeCompiler codeDomProvider = objCSharpCodePrivoder.CreateCompiler();
+#else
+            CodeDomProvider codeDomProvider = CodeDomProvider.CreateProvider("CSharp");
+#endif
+
+
             CompilerParameters objCompilerParameters = new CompilerParameters();
             objCompilerParameters.ReferencedAssemblies.Add("System.dll");
             objCompilerParameters.ReferencedAssemblies.Add("System.Core.dll");
@@ -48,7 +55,7 @@ namespace Iveely.Framework.Text
             objCompilerParameters.GenerateExecutable = false;
             objCompilerParameters.GenerateInMemory = true;
 
-            CompilerResults cr = objICodeCompiler.CompileAssemblyFromSource(objCompilerParameters, GenerateCode(sourceCode));
+            CompilerResults cr = codeDomProvider.CompileAssemblyFromSource(objCompilerParameters, GenerateCode(sourceCode));
 
             if (cr.Errors.HasErrors)
             {
@@ -64,6 +71,14 @@ namespace Iveely.Framework.Text
             return string.Empty;
         }
 
+        /// <summary>
+        /// 执行源码
+        /// </summary>
+        /// <param name="code">源码</param>
+        /// <param name="className">类名</param>
+        /// <param name="libraries">引用的Dll</param>
+        /// <param name="parameters">参数</param>
+        /// <returns></returns>
         public static object Execode(string code, string className, List<string> libraries, object[] parameters)
         {
             const string functionName = "Run";

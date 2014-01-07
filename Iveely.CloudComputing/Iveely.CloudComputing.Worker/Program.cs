@@ -19,6 +19,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Iveely.CloudComputing.Worker
 {
+    /// <summary>
+    /// 用户任务的真正执行者。
+    /// </summary>
     public class Program
     {
         private static Server _taskSuperviser;
@@ -34,7 +37,7 @@ namespace Iveely.CloudComputing.Worker
         public static void Main(string[] args)
         {
             //1. 确定worker运行端口号
-            int port = 8001;
+            int port = 7081;
             if (args.Length > 0)
             {
                 port = int.Parse(args[0]);
@@ -53,8 +56,7 @@ namespace Iveely.CloudComputing.Worker
             CheckCrash();
 
             //2. 向State Center发送上线消息
-            StateHelper.Put("ISE://system/state/worker/" + _machineName + "," + _servicePort,
-                _machineName + ":" + _servicePort + " is ready online!");
+            StateHelper.Put("ISE://system/state/worker/" + _machineName + "," + _servicePort, _machineName + ":" + _servicePort + " is ready online!");
 
             //3. 启动心跳线程
             Thread thread = new Thread(SendHeartbeat);
@@ -311,8 +313,7 @@ namespace Iveely.CloudComputing.Worker
         {
             while (true)
             {
-                Framework.Network.Synchronous.Client client = new Framework.Network.Synchronous.Client(Dns.GetHostName(),
-            8600);
+                Framework.Network.Synchronous.Client client = new Framework.Network.Synchronous.Client(Dns.GetHostName(), 8600);
                 string information = Process.GetCurrentProcess().Id + "|" + _servicePort + "?" + DateTime.UtcNow.ToString();
                 Packet packet = new Packet(Encoding.UTF8.GetBytes(information));
                 packet.WaiteCallBack = false;
