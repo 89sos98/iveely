@@ -123,7 +123,7 @@ namespace Newtonsoft.Json.Serialization
         canDeserialize = true;
         ShouldCreateWrapper = true;
       }
-#if !(NET40 || NET35 || NET20 || SILVERLIGHT || WINDOWS_PHONE || PORTABLE40)
+#if NET45
       else if (ReflectionUtils.ImplementsGenericDefinition(underlyingType, typeof(IReadOnlyCollection<>), out tempCollectionType))
       {
         CollectionItemType = underlyingType.GetGenericArguments()[0];
