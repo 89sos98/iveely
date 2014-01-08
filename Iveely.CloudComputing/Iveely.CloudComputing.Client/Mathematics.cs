@@ -55,7 +55,7 @@ namespace Iveely.CloudComputing.Client
         {
             Init();
             MergePacket packet = new MergePacket(Serializer.SerializeToBytes(val), MergePacket.MergeType.Average,
-                Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) {WaiteCallBack = true};
+                Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) { WaiteCallBack = true };
             Logger.Info(Application.Parameters[2] + "," + Application.Parameters[3] + " send average commond,value is " + val);
             return _client.Send<double>(packet);
         }
@@ -69,8 +69,7 @@ namespace Iveely.CloudComputing.Client
         public static List<T> CombineList<T>(List<T> objects)
         {
             Init();
-            MergePacket packet = new MergePacket(Serializer.SerializeToBytes(objects), MergePacket.MergeType.CombineList,
-                Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) {WaiteCallBack = true};
+            MergePacket packet = new MergePacket(Serializer.SerializeToBytes(objects), MergePacket.MergeType.CombineList, Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) { WaiteCallBack = true };
             Logger.Info(Application.Parameters[2] + "," + Application.Parameters[3] + " send combine list commond.");
             return _client.Send<List<T>>(packet);
         }
@@ -83,8 +82,7 @@ namespace Iveely.CloudComputing.Client
         public static Hashtable CombineTable(Hashtable table)
         {
             Init();
-            MergePacket packet = new MergePacket(Serializer.SerializeToBytes(table), MergePacket.MergeType.CombineTable,
-                Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) {WaiteCallBack = true};
+            MergePacket packet = new MergePacket(Serializer.SerializeToBytes(table), MergePacket.MergeType.CombineTable, Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) { WaiteCallBack = true };
             Logger.Info(Application.Parameters[2] + "," + Application.Parameters[3] + " send combine table commond.");
             return _client.Send<Hashtable>(packet);
         }
@@ -103,10 +101,10 @@ namespace Iveely.CloudComputing.Client
             objects = quickSort.GetResult(objects);
             Logger.Info("Local sort has finied,now send to Merger to combine.");
             MergePacket packet = new MergePacket(Serializer.SerializeToBytes(objects), MergePacket.MergeType.CombineSort,
-            Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) {WaiteCallBack = true};
+            Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) { WaiteCallBack = true };
             Logger.Info(Application.Parameters[2] + "," + Application.Parameters[3] + " send combine sort commond.");
             object[] results = _client.Send<object[]>(packet);
-            return Array.ConvertAll(results, n => (T) Convert.ChangeType(n, typeof (T)));
+            return Array.ConvertAll(results, n => (T)Convert.ChangeType(n, typeof(T)));
         }
 
         /// <summary>
@@ -120,10 +118,10 @@ namespace Iveely.CloudComputing.Client
             Init();
             objects = (List<T>)objects.Distinct();
             MergePacket packet = new MergePacket(Serializer.SerializeToBytes(objects), MergePacket.MergeType.Distinct,
-                 Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) {WaiteCallBack = true};
+                 Application.Parameters[4].ToString(), Application.Parameters[5].ToString()) { WaiteCallBack = true };
             Logger.Info(Application.Parameters[2] + "," + Application.Parameters[3] + " send distinct commond. ");
             List<object> results = _client.Send<List<object>>(packet);
-            return results.Select(result => (T) result).ToList();
+            return results.Select(result => (T)result).ToList();
         }
 
         /// <summary>

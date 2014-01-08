@@ -18,6 +18,11 @@ namespace Iveely.CloudComputing.Merger
 
         private readonly string _flag;
 
+        /// <summary>
+        /// 初始运算操作集
+        /// </summary>
+        /// <param name="appTimeStamp">时间戳</param>
+        /// <param name="appName">应用程序名称</param>
         public Distinct(string appTimeStamp, string appName)
             : base(appTimeStamp, appName)
         {
@@ -26,6 +31,12 @@ namespace Iveely.CloudComputing.Merger
             _flag = OperateType + "_" + appTimeStamp + "_" + appName;
         }
 
+        /// <summary>
+        /// 计算
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="val"></param>
+        /// <returns></returns>
         public override T Compute<T>(T val)
         {
             lock (Table)

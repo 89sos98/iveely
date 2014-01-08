@@ -40,6 +40,9 @@ namespace Iveely.CloudComputing.Supervisor
             monitorThread.Start();
         }
 
+        /// <summary>
+        /// 监控器接收各个任务发送过来的信息
+        /// </summary>
         private static void KeepMonitor()
         {
             Server server = new Server(Dns.GetHostName(), 8600, Heartbeat);

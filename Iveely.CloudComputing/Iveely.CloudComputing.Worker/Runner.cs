@@ -18,7 +18,7 @@ using log4net;
 namespace Iveely.CloudComputing.Worker
 {
     /// <summary>
-    ///     监控器
+    ///     监控器（具体运行者）
     ///     (用于处理客户端发来的请求)
     /// </summary>
     [Serializable]
@@ -35,9 +35,9 @@ namespace Iveely.CloudComputing.Worker
         //private string _status;
 
         /// <summary>
-        /// 初始监控器
+        /// 初始监控器（具体运行者）
         /// </summary>
-        /// <param name="status"></param>
+        /// <param name="status">运行状态类</param>
         public Runner(ref RunningStatus status)
         {
             Status = status;

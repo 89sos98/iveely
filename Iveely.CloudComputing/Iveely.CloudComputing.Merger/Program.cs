@@ -34,6 +34,11 @@ namespace Iveely.CloudComputing.Merger
             }
         }
 
+        /// <summary>
+        /// 处理要合并的数据
+        /// </summary>
+        /// <param name="bytes">数据</param>
+        /// <returns></returns>
         private static byte[] ProcessMergerClient(byte[] bytes)
         {
             try

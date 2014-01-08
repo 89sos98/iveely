@@ -35,6 +35,9 @@ namespace Iveely.CloudComputing.Merger
             protected set;
         }
 
+        /// <summary>
+        /// 期望接收合并的个数
+        /// </summary>
         public static int ExpectCount = -1;
 
         /// <summary>
@@ -48,6 +51,11 @@ namespace Iveely.CloudComputing.Merger
         /// </summary>
         public static Hashtable Table;
 
+        /// <summary>
+        /// 初始运算操作集
+        /// </summary>
+        /// <param name="appTimeStamp">时间戳</param>
+        /// <param name="appName">应用程序名称</param>
         protected Operate(string appTimeStamp, string appName)
         {
             this.AppTimeStamp = appTimeStamp;
@@ -65,6 +73,12 @@ namespace Iveely.CloudComputing.Merger
 
         }
 
+        /// <summary>
+        /// 计算
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="val"></param>
+        /// <returns></returns>
         public abstract T Compute<T>(T val);
 
         /// <summary>
@@ -88,6 +102,10 @@ namespace Iveely.CloudComputing.Merger
             return false;
         }
 
+        /// <summary>
+        /// 移除
+        /// </summary>
+        /// <param name="flag"></param>
         public void Remove(string flag)
         {
 

@@ -22,6 +22,9 @@ namespace Iveely.CloudComputing.Cacher
 #endif
     public class CyclingHash
     {
+        /// <summary>
+        /// 实际條數
+        /// </summary>
         public int Count { get; private set; }
 
         /// <summary>

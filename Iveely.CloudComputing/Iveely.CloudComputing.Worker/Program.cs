@@ -65,17 +65,22 @@ namespace Iveely.CloudComputing.Worker
             //3. 启动任务接收监听
             if (_taskSuperviser == null)
             {
-                Logger.Info("Starting listen the worker's task...");
+                Logger.Info("开始监听任务...");
                 _taskSuperviser = new Server(_machineName, _servicePort, ProcessTask);
-                Logger.Info("worker's task supervisor instance build success...");
+                Logger.Info("监听任务管理已建立成功...");
                 _taskSuperviser.Listen();
             }
         }
 
+        /// <summary>
+        /// 接收任务
+        /// </summary>
+        /// <param name="bytes">数据</param>
+        /// <returns></returns>
         private static byte[] ProcessTask(byte[] bytes)
         {
             var packet = Serializer.DeserializeFromBytes<ExcutePacket>(bytes);
-            Logger.Info("Get process task.");
+            Logger.Info("获取进程任务.");
             //如果是执行代码
             if (packet.ExcuteType == ExcutePacket.Type.Code)
             {
@@ -281,6 +286,11 @@ namespace Iveely.CloudComputing.Worker
             }
         }
 
+        /// <summary>
+        /// 设置任务运行状态
+        /// </summary>
+        /// <param name="key">程序名</param>
+        /// <param name="status">状态名</param>
         public static void SetStatus(string key, string status)
         {
             if (_statusCenter[key] != null)
